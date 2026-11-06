@@ -15,7 +15,7 @@ class Producto(models.Model):
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField()
     
-    # Precio base en dólares para la conversión a CLP y COP
+    
     precio_base_usd = models.DecimalField(max_digits=10, decimal_places=2)
     
     stock = models.PositiveIntegerField(default=0)

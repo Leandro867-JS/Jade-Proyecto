@@ -7,6 +7,6 @@ class CategoriaViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategoriaSerializer
 
 class ProductoViewSet(viewsets.ReadOnlyModelViewSet):
-    # Solo mostramos los productos que estén marcados como disponibles
+    
     queryset = Producto.objects.filter(disponible=True)
     serializer_class = ProductoSerializer
