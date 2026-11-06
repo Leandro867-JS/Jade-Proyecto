@@ -109,3 +109,173 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+
+:root {
+  --jade-primary: #3A6351; /* Un verde jade profundo y elegante */
+  --jade-secondary: #E3EBE6; /* Un fondo muy suave, casi blanco, que transmite paz */
+  --jade-text: #2C3E50; /* Un tono oscuro sin ser negro puro, más suave para leer */
+  --jade-accent: #D4A373; /* Un tono tierra/dorado sutil para contrastar (velas/gemas) */
+}
+
+body {
+  background-color: var(--jade-secondary);
+  color: var(--jade-text);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+
+body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #fcfcfc;
+    margin: 0;
+    padding: 0;
+}
+
+/* --- TOP BAR GRIS --- */
+.top-bar {
+    background-color: #f8f8f8;
+    color: #555;
+    font-size: 0.85rem;
+    padding: 8px 0;
+    text-align: center;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+/* --- HEADER PRINCIPAL --- */
+.navbar-custom {
+    background: linear-gradient(90deg, #b975b9, #5b4694, #2b5c9c);
+    padding: 20px 5%; 
+}
+
+.logo-placeholder {
+    width: 180px; 
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 30px;
+}
+.logo-placeholder img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 1rem;
+    margin: 0 10px;
+    font-weight: 400;
+}
+.nav-link:hover, .nav-link.active {
+    color: white !important;
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+.header-icons {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}
+.header-icons i {
+    color: white;
+    font-size: 1.3rem;
+    cursor: pointer;
+}
+.currency-selector {
+    color: white;
+    font-weight: bold;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* --- CATÁLOGO --- */
+.catalog-title {
+    color: #5b2c82;
+    font-weight: 400;
+    font-size: 2.2rem;
+    margin: 40px 0;
+    text-align: left;
+}
+.product-card {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    transition: 0.3s;
+    height: 100%;
+}
+.product-card:hover {
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+.product-img {
+    background-color: #ffffff;
+    border-radius: 12px 12px 0 0;
+    padding: 20px;
+    text-align: center;
+    height: 250px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.product-img img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.badge-offer {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: white;
+    color: #5b2c82;
+    border: 1px solid #e0d8d0;
+    border-radius: 15px;
+    padding: 3px 12px;
+    font-size: 0.75rem;
+}
+.product-title {
+    color: #5b2c82;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-top: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.product-format {
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 10px;
+}
+.product-price-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.price-old {
+    color: #a0a0a0;
+    text-decoration: line-through;
+    font-size: 0.9rem;
+}
+.price-new {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+}
+.btn-add {
+    background-color: #5b2c82;
+    color: white;
+    border-radius: 20px;
+    width: 100%;
+    margin-top: 15px;
+    padding: 8px 0;
+}
