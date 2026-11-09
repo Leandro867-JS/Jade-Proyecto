@@ -11,7 +11,7 @@ class Categoria(models.Model):
         verbose_name_plural = "Categorías"
 
 class Producto(models.Model):
-    categoria = models.ForeignKey(Categoria, related_name='productos', on_delete=models.CASCADE)
+    categoria = models.ForeignKey(Categoria, related_name='productos', on_delete=models.PROTECT)
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField()
     
@@ -25,3 +25,6 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+class Meta:
+    rdering = ['-fecha_creacion']

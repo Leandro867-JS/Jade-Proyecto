@@ -1,91 +1,115 @@
 import { useState, useEffect } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import axios from 'axios';
-import logoJade from '../assets/logo.avif';
+import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
 const ProductoList = () => {
     const [productos, setProductos] = useState([]);
+    const [cargando, setCargando] = useState(true);
+    const [error, setError] = useState(null);
+    const [agregadoId, setAgregadoId] = useState(null);
+    const { nombre } = useParams();
+    const { agregar } = useCart();
+    const { precioDe, formatear } = useCurrency();
 
     useEffect(() => {
-        axios.get('http://127.0.0.1:8000/api/productos/')
-            .then(response => setProductos(response.data))
-            .catch(error => console.error("Error consultando la API:", error));
-    }, []);
+        const controller = new AbortController();
+        setCargando(true);
+        setError(null);
+
+        axios.get(`${API_URL}/api/productos/`, {
+            params: nombre ? { categoria: nombre } : {},
+            signal: controller.signal,
+        })
+            .then(res => setProductos(Array.isArray(res.data) ? res.data : res.data.results ?? []))
+            .catch(err => {
+                if (axios.isCancel(err)) return;
+                console.error('Error consultando la API:', err);
+                setError('No pudimos cargar los productos. Intenta nuevamente en unos minutos.');
+            })
+            .finally(() => setCargando(false));
+
+        return () => controller.abort();
+    }, [nombre]);
+
+    const handleAgregar = (producto) => {
+        agregar(producto);
+        setAgregadoId(producto.id);
+        setTimeout(() => setAgregadoId(null), 1200);
+    };
 
     return (
-        <>
-            {/* Top bar */}
-            <div className="top-bar">
-                <i className="bi bi-chevron-left" style={{cursor:'pointer'}}></i>
-                <span className="d-none d-sm-inline">Aceites esenciales piedras naturales, reiki, asesoría personalizada</span>
-                <span className="d-inline d-sm-none">Aceites, piedras y reiki</span>
-                <i className="bi bi-chevron-right" style={{cursor:'pointer'}}></i>
-            </div>
+        <div className="container mb-5 mt-4">
+            <h2 className="catalog-title text-capitalize">
+                {nombre ?? 'Catálogo Completo'}
+            </h2>
 
-            {/* Header Principal */}
-            <nav className="navbar navbar-expand-lg navbar-custom">
-                <div className="container-fluid align-items-center flex-wrap">
-                    
-                    <button className="navbar-toggler border-0 shadow-none d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#menuMovil">
-                        <i className="bi bi-list text-white" style={{fontSize: '2rem'}}></i>
-                    </button>
-                    
-                    <a className="navbar-brand mx-auto m-lg-0" href="#">
-                        <div className="logo-placeholder">
-                            <img src={logoJade} alt="Jade Aromas Logo" />
-                        </div>
-                    </a>
-                    
-                    <div className="collapse navbar-collapse justify-content-start d-none d-lg-flex">
-                        <ul className="navbar-nav mb-2 mb-lg-0">
-                            <li className="nav-item"><a className="nav-link active" href="#">Inicio</a></li>
-                            <li className="nav-item"><a className="nav-link" href="#">Aromaterapia</a></li>
-                            <li className="nav-item"><a className="nav-link" href="#">Gemoterapia</a></li>
-                            <li className="nav-item"><a className="nav-link" href="#">Alquimia</a></li>
-                            <li className="nav-item"><a className="nav-link" href="#">Contacto</a></li>
-                        </ul>
-                    </div>
-
-                    <div className="header-icons mx-auto mx-lg-0 mt-3 mt-lg-0">
-                        <i className="bi bi-search"></i>
-                        <i className="bi bi-person"></i>
-                        <div className="currency-selector ms-2 ms-sm-3">CLP <i className="bi bi-caret-down-fill" style={{fontSize: '0.7rem'}}></i></div>
-                        <i className="bi bi-cart3"></i>
-                    </div>
+            {cargando && (
+                <div className="text-center my-5" role="status">
+                    <div className="spinner-border" style={{ color: '#5b2c82' }}></div>
+                    <p className="mt-3 text-muted">Cargando productos...</p>
                 </div>
-            </nav>
+            )}
 
-            {/* Catálogo Dinámico */}
-            <div className="container mb-5">
-                <h2 className="catalog-title">Catálogo de Productos</h2>
-                <div className="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
-                    
+            {!cargando && error && (
+                <div className="alert alert-danger text-center border-0">
+                    <i className="bi bi-exclamation-triangle me-2"></i>
+                    {error}
+                </div>
+            )}
+
+            {!cargando && !error && productos.length === 0 && (
+                <div className="alert alert-info text-center mt-4 border-0" style={{ backgroundColor: '#E3EBE6', color: '#2C3E50' }}>
+                    <i className="bi bi-info-circle me-2"></i>
+                    Aún no tenemos productos en esta categoría, ¡vuelve pronto!
+                </div>
+            )}
+
+            {!cargando && !error && productos.length > 0 && (
+                <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
                     {productos.map(producto => (
                         <div className="col" key={producto.id}>
                             <div className="card product-card p-3">
-                                <div className="product-img">
-                                    <span className="badge-offer">{producto.categoria_nombre}</span>
-                                    {producto.imagen ? (
-                                        <img src={`http://127.0.0.1:8000${producto.imagen}`} alt={producto.nombre} />
-                                    ) : (
-                                        <span className="text-muted">Sin imagen</span>
-                                    )}
-                                </div>
-                                <h5 className="product-title">{producto.nombre}</h5>
+                                <Link to={`/producto/${producto.id}`} className="product-link">
+                                    <div className="product-img">
+                                        <span className="badge-offer">{producto.categoria_nombre}</span>
+                                        {producto.imagen ? (
+                                            <img src={producto.imagen} alt={producto.nombre} loading="lazy" />
+                                        ) : (
+                                            <span className="text-muted">Sin imagen</span>
+                                        )}
+                                    </div>
+                                    <h5 className="product-title" title={producto.nombre}>
+                                        {producto.nombre}
+                                    </h5>
+                                </Link>
                                 <p className="product-format text-truncate" title={producto.descripcion}>
                                     {producto.descripcion}
                                 </p>
                                 <div className="product-price-container">
-                                    {/* Aquí simulamos el precio antiguo aumentándole un porcentaje o lo dejamos si no hay descuento */}
-                                    <span className="price-new">${producto.precio_clp} CLP</span>
+                                    <span className="price-new">{formatear(precioDe(producto))}</span>
                                 </div>
-                                <button className="btn btn-add">Añadir al carrito</button>
+                                <button
+                                    type="button"
+                                    className="btn btn-add"
+                                    disabled={producto.stock === 0}
+                                    onClick={() => handleAgregar(producto)}
+                                >
+                                    {producto.stock === 0
+                                        ? 'Agotado'
+                                        : agregadoId === producto.id
+                                            ? '¡Añadido!'
+                                            : 'Añadir al carrito'}
+                                </button>
                             </div>
                         </div>
                     ))}
-
                 </div>
-            </div>
-        </>
+            )}
+        </div>
     );
 };
 

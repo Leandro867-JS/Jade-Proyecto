@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Producto, Categoria
+from django.conf import settings
 
 class CategoriaSerializer(serializers.ModelSerializer):
     class Meta:
@@ -8,8 +9,6 @@ class CategoriaSerializer(serializers.ModelSerializer):
 
 class ProductoSerializer(serializers.ModelSerializer):
     categoria_nombre = serializers.ReadOnlyField(source='categoria.nombre')
-    
-   
     precio_clp = serializers.SerializerMethodField()
     precio_cop = serializers.SerializerMethodField()
 
@@ -17,15 +16,15 @@ class ProductoSerializer(serializers.ModelSerializer):
         model = Producto
         fields = [
             'id', 'nombre', 'descripcion', 'categoria', 'categoria_nombre',
-            'precio_base_usd', 'precio_clp', 'precio_cop', 
-            'stock', 'imagen', 'disponible'
+            'precio_base_usd', 'precio_clp', 'precio_cop',
+            'stock', 'imagen', 'disponible',
         ]
 
-   
+    def _convertir(self, obj, moneda):
+        return round(obj.precio_base_usd * settings.TASAS_CAMBIO[moneda])
+
     def get_precio_clp(self, obj):
-        tasa_clp = 950 
-        return round(obj.precio_base_usd * tasa_clp)
+        return self._convertir(obj, 'CLP')
 
     def get_precio_cop(self, obj):
-        tasa_cop = 3900 
-        return round(obj.precio_base_usd * tasa_cop)
+        return self._convertir(obj, 'COP')
