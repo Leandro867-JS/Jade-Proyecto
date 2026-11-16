@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { useCurrency, MONEDAS } from './CurrencyContext';
+import { useCurrency } from './CurrencyContext';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'jade_carrito';
@@ -8,8 +8,7 @@ const leerCarrito = () => {
     try {
         const guardado = localStorage.getItem(STORAGE_KEY);
         const items = guardado ? JSON.parse(guardado) : [];
-        // descarta ítems antiguos guardados sin precio_cop
-        return items.filter(i => i.precio_cop != null);
+        return items.filter(i => i.precio_clp != null);
     } catch {
         return [];
     }
@@ -17,8 +16,7 @@ const leerCarrito = () => {
 
 export const CartProvider = ({ children }) => {
     const [items, setItems] = useState(leerCarrito);
-    const { moneda } = useCurrency();
-    const campo = MONEDAS[moneda].campo;
+    const { precioDe } = useCurrency();
 
     useEffect(() => {
         try {
@@ -44,7 +42,6 @@ export const CartProvider = ({ children }) => {
                     id: producto.id,
                     nombre: producto.nombre,
                     precio_clp: producto.precio_clp,
-                    precio_cop: producto.precio_cop,
                     imagen: producto.imagen,
                     stock: producto.stock,
                     cantidad: Math.min(cantidad, producto.stock),
@@ -70,9 +67,11 @@ export const CartProvider = ({ children }) => {
         () => items.reduce((suma, i) => suma + i.cantidad, 0),
         [items]
     );
+
+    // Calcula el total convirtiendo cada ítem con la tasa en vivo de la API
     const totalPrecio = useMemo(
-        () => items.reduce((suma, i) => suma + i.cantidad * Number(i[campo] ?? 0), 0),
-        [items, campo]
+        () => items.reduce((suma, i) => suma + i.cantidad * precioDe(i), 0),
+        [items, precioDe]
     );
 
     return (

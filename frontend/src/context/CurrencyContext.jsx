@@ -1,12 +1,21 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 
 export const MONEDAS = {
-    CLP: { campo: 'precio_clp', locale: 'es-CL', nombre: 'Peso chileno' },
-    COP: { campo: 'precio_cop', locale: 'es-CO', nombre: 'Peso colombiano' },
+    CLP: { locale: 'es-CL', nombre: 'Peso chileno', decimales: 0 },
+    USD: { locale: 'en-US', nombre: 'Dólar estadounidense', decimales: 2 },
+    COP: { locale: 'es-CO', nombre: 'Peso colombiano', decimales: 0 },
 };
 
 const CurrencyContext = createContext(null);
 const STORAGE_KEY = 'jade_moneda';
+const RATES_STORAGE_KEY = 'jade_tasas_cambio';
+
+// Tasas de respaldo por si falla la conexión a internet
+const TASAS_RESPALDO = {
+    CLP: 1,
+    USD: 0.00103, // ~970 CLP por 1 USD
+    COP: 4.35,    // ~1 CLP = 4.35 COP
+};
 
 const leerMoneda = () => {
     try {
@@ -17,32 +26,79 @@ const leerMoneda = () => {
     }
 };
 
+const leerTasasGuardadas = () => {
+    try {
+        const guardadas = localStorage.getItem(RATES_STORAGE_KEY);
+        return guardadas ? JSON.parse(guardadas) : TASAS_RESPALDO;
+    } catch {
+        return TASAS_RESPALDO;
+    }
+};
+
 export const CurrencyProvider = ({ children }) => {
     const [moneda, setMoneda] = useState(leerMoneda);
+    const [tasas, setTasas] = useState(leerTasasGuardadas);
 
+    // Guarda la moneda seleccionada por el usuario
     useEffect(() => {
         try {
             localStorage.setItem(STORAGE_KEY, moneda);
         } catch {
-            // sin almacenamiento: la moneda sigue funcionando en memoria
+            // Continúa en memoria
         }
     }, [moneda]);
 
-    // Devuelve el precio del producto (o ítem del carrito) en la moneda activa
-    const precioDe = (obj) => Number(obj?.[MONEDAS[moneda].campo] ?? 0);
+    // Consulta la API gratuita de tipo de cambio al iniciar la aplicación
+    useEffect(() => {
+        fetch('https://open.er-api.com/v6/latest/CLP')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.rates) {
+                    const nuevasTasas = {
+                        CLP: 1,
+                        USD: data.rates.USD ?? TASAS_RESPALDO.USD,
+                        COP: data.rates.COP ?? TASAS_RESPALDO.COP,
+                    };
+                    setTasas(nuevasTasas);
+                    try {
+                        localStorage.setItem(RATES_STORAGE_KEY, JSON.stringify(nuevasTasas));
+                    } catch {
+                        // Continúa en memoria
+                    }
+                }
+            })
+            .catch(err => {
+                console.warn('Usando tasas de cambio de respaldo:', err);
+            });
+    }, []);
 
-    // Formatea un número en la moneda activa, ej: "$9.500 CLP"
+    // Calcula el precio dinámicamente a partir del precio base en CLP
+    const precioDe = (obj) => {
+        const baseClp = Number(obj?.precio_clp ?? 0);
+        if (moneda === 'CLP') return baseClp;
+
+        const tasa = tasas[moneda] ?? 1;
+        const convertido = baseClp * tasa;
+
+        return MONEDAS[moneda].decimales === 0 
+            ? Math.round(convertido) 
+            : Number(convertido.toFixed(2));
+    };
+
+    // Formatea el valor según la moneda activa (CLP, USD o COP)
     const formatear = (valor) => {
-        const numero = new Intl.NumberFormat(MONEDAS[moneda].locale, {
+        const config = MONEDAS[moneda] || MONEDAS.CLP;
+        const numero = new Intl.NumberFormat(config.locale, {
             style: 'currency',
             currency: moneda,
-            maximumFractionDigits: 0,
+            minimumFractionDigits: config.decimales,
+            maximumFractionDigits: config.decimales,
         }).format(valor);
         return `${numero} ${moneda}`;
     };
 
     return (
-        <CurrencyContext.Provider value={{ moneda, setMoneda, precioDe, formatear }}>
+        <CurrencyContext.Provider value={{ moneda, setMoneda, precioDe, formatear, tasas }}>
             {children}
         </CurrencyContext.Provider>
     );

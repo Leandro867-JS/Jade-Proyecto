@@ -1,10 +1,55 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 
 const Carrito = () => {
     const { items, cambiarCantidad, quitar, vaciar, totalItems, totalPrecio } = useCart();
-    const { precioDe, formatear } = useCurrency();
+    const { moneda, precioDe, formatear } = useCurrency();
+    const [ordenConfirmada, setOrdenConfirmada] = useState(null);
+
+    const handleFinalizarCompra = () => {
+        const nuevaOrden = {
+            folio: `JADE-${Math.floor(100000 + Math.random() * 900000)}`,
+            fecha: new Date().toISOString(),
+            moneda,
+            total: formatear(totalPrecio),
+            items: items.map(i => ({
+                id: i.id,
+                nombre: i.nombre,
+                cantidad: i.cantidad,
+                subtotal: formatear(precioDe(i) * i.cantidad)
+            }))
+        };
+
+        try {
+            const historial = JSON.parse(localStorage.getItem('jade_ordenes') || '[]');
+            localStorage.setItem('jade_ordenes', JSON.stringify([...historial, nuevaOrden]));
+        } catch {
+            // Continúa en memoria
+        }
+
+        setOrdenConfirmada(nuevaOrden);
+        vaciar();
+    };
+
+    if (ordenConfirmada) {
+        return (
+            <div className="container my-5 text-center">
+                <div className="cart-summary mx-auto" style={{ maxWidth: '540px', position: 'static' }}>
+                    <i className="bi bi-check-circle-fill" style={{ fontSize: '3rem', color: '#5b2c82' }}></i>
+                    <h2 className="catalog-title text-center my-3">¡Gracias por tu compra!</h2>
+                    <p className="text-muted mb-2">
+                        Tu pedido ha sido registrado con el folio <strong>{ordenConfirmada.folio}</strong>.
+                    </p>
+                    <p className="fw-bold fs-5 mb-4">Total pagado: {ordenConfirmada.total}</p>
+                    <Link to="/" className="btn btn-add" style={{ width: 'auto', padding: '10px 32px' }}>
+                        Volver al catálogo
+                    </Link>
+                </div>
+            </div>
+        );
+    }
 
     if (items.length === 0) {
         return (
@@ -90,7 +135,9 @@ const Carrito = () => {
                             <span>Total</span>
                             <span>{formatear(totalPrecio)}</span>
                         </div>
-                        <button type="button" className="btn btn-add">Finalizar compra</button>
+                        <button type="button" className="btn btn-add" onClick={handleFinalizarCompra}>
+                            Finalizar compra
+                        </button>
                         <Link to="/" className="d-block text-center mt-3 small" style={{ color: '#5b2c82' }}>
                             Seguir comprando
                         </Link>
